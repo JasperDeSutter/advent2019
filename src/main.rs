@@ -1,6 +1,4 @@
-use std::env;
-
-const MODULES_MASS: &[u64] = &[
+const MODULES_MASS: &[u32] = &[
     106404, 140515, 142745, 120767, 79665, 54235, 127391, 72207, 70799, 79485, 103994, 129583,
     132791, 95135, 121194, 129425, 64861, 123233, 132805, 87916, 111395, 126625, 113045, 61704,
     65413, 145820, 75988, 74717, 115137, 85331, 86833, 86063, 85464, 139738, 103372, 101942, 52741,
@@ -13,36 +11,28 @@ const MODULES_MASS: &[u64] = &[
 ];
 
 pub fn main() {
-    if let Some(number) = env::args().last() {
-        if let Ok(value) = number.parse::<u64>() {
-            println!(
-                "required fuel for mass {} is: {}",
-                value,
-                mass_required_fuel(value)
-            );
-            return;
-        }
-    }
-
-    let total_fuel: u64 = MODULES_MASS.iter().copied().map(mass_required_fuel).sum();
+    let total_fuel: u32 = MODULES_MASS.iter().copied().map(mass_required_fuel).sum();
     println!("the total required fuel for all modules is: {}", total_fuel);
 
-    let total_fuel: u64 = MODULES_MASS.iter().copied().map(required_fuel).sum();
-    println!("the total required fuel for all modules including fuel is: {}", total_fuel);
+    let total_fuel: u32 = MODULES_MASS.iter().copied().map(required_fuel).sum();
+    println!(
+        "the total required fuel for all modules including fuel is: {}",
+        total_fuel
+    );
 }
 
-pub fn mass_required_fuel(mass: u64) -> u64 {
-    (mass / 3).saturating_sub(2)
+fn calculate_fuel(mass: u32) -> Option<u32> {
+    mass.checked_div(3)?.checked_sub(2)
 }
 
-pub fn required_fuel(mass: u64) -> u64 {
-    let mut last_mass = mass_required_fuel(mass);
-    let mut total = last_mass;
-    while last_mass > 0 {
-        last_mass = mass_required_fuel(last_mass);
-        total += last_mass;
-    }
-    total
+fn mass_required_fuel(mass: u32) -> u32 {
+    calculate_fuel(mass).unwrap_or_default()
+}
+
+fn required_fuel(mass: u32) -> u32 {
+    std::iter::successors(Some(mass), |m| calculate_fuel(*m))
+        .skip(1)
+        .sum()
 }
 
 #[cfg(test)]
@@ -84,6 +74,11 @@ mod part1 {
             "For a mass of 100756, the fuel required is 33583."
         )
     }
+
+    #[test]
+    fn test_zero() {
+        assert_eq!(mass_required_fuel(0), 0)
+    }
 }
 
 #[cfg(test)]
@@ -93,7 +88,7 @@ mod part2 {
     #[test]
     fn test_example_1() {
         assert_eq!(
-            fuel_required_fuel(12),
+            required_fuel(12),
             2,
             "A module of mass 14 requires 2 fuel. This fuel requires no further
             fuel (2 divided by 3 and rounded down is 0, which would call for a
@@ -104,7 +99,7 @@ mod part2 {
     #[test]
     fn test_example_2() {
         assert_eq!(
-            fuel_required_fuel(1969),
+            required_fuel(1969),
             966,
             "At first, a module of mass 1969 requires 654 fuel. Then, this fuel
             requires 216 more fuel (654 / 3 - 2). 216 then requires 70 more fuel,
@@ -117,10 +112,15 @@ mod part2 {
     #[test]
     fn test_example_3() {
         assert_eq!(
-            fuel_required_fuel(100756),
+            required_fuel(100756),
             50346,
             "The fuel required by a module of mass 100756 and its fuel is:
             33583 + 11192 + 3728 + 1240 + 411 + 135 + 43 + 12 + 2 = 50346."
         )
+    }
+
+    #[test]
+    fn test_zero() {
+        assert_eq!(required_fuel(0), 0)
     }
 }
