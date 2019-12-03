@@ -2,9 +2,13 @@ const WIRE1: &str = "R1004,U520,R137,D262,L403,U857,R50,U679,R788,D98,L717,D1,R3
 const WIRE2: &str = "L1008,U717,R288,D770,R270,U514,R109,D538,L719,U179,R466,D792,R421,U723,L22,U705,L284,U14,L478,U367,R727,U880,R620,D46,R377,U897,L731,U840,L910,D385,L257,U311,L596,D991,L668,D730,L707,D816,R47,U948,R84,D700,R299,U707,R261,D928,R358,D504,R309,U369,R931,U20,L940,U326,L362,D52,R98,D475,L907,D918,R931,D468,R279,D586,R592,U973,R753,D365,R694,U278,R934,U712,R441,U996,L989,D693,L211,D561,R105,D425,R53,U168,L451,U865,L585,D412,L857,U988,R724,U774,R295,U588,R329,D810,L698,D118,R277,U193,R309,U933,R186,D535,R409,U322,L849,U606,R590,U892,L542,D237,R475,D920,R679,U602,L477,D634,L988,D540,L323,U791,L375,U625,L621,U567,L943,U512,L239,D90,L66,U151,R83,U435,R612,D865,L177,U368,R326,U574,L241,U197,R499,U419,R297,U207,L311,D243,L559,D281,R513,U748,L884,U207,R71,D441,R133,D993,L4,D977,L669,U523,L564,U186,R477,U737,L685,U338,L456,U939,R774,U674,L97,D827,R237,D451,R618,D143,R750,U196,L559,D178,L693,D916,R334,U231,L651,U249,R620,U283,L387,U352,L915,U959,L693,U909,R320,U119,L617,U177,L993,D265,R667,U204,R59,D601,L579,U483,R155,D484,L44,D751,R915,U510,L552,U308,R505,U394,R585,U872,L617,U202,R928,U941,R235,U768,R666,D547,L244,D270,R353,D612,R384,U430,L685,D536,R103,U147,R794,D621,L52,U96,L557,D455,L635,D58,R265,U545,R938,D266,L173,U746,L672,D237,R286,U131,R487,U837,R394,D702,R49,U579,L699,U819,L448,D223,L982,D906,L397,U807,L737,D223,L791,D965,R436,U29,R908,D273,R194,U91,R232,U591,L336,D70,R467,U505,L341,U989,R278,U387,L442,U950,R487,D384,L534,D514,L433,U627,R381,U54,L847,U231,L590";
 
 fn main() {
-    let result = closest_intersection(WIRE1, WIRE2);
+    let closest = closest_intersection(WIRE1, WIRE2);
 
-    dbg!(result);
+    dbg!(closest);
+
+    let fastest = fastest_intersection(WIRE1, WIRE2);
+
+    dbg!(fastest);
 }
 
 struct Step {
@@ -67,6 +71,24 @@ fn closest_intersection(wire1: &str, wire2: &str) -> usize {
         .unwrap() as usize
 }
 
+fn fastest_intersection(wire1: &str, wire2: &str) -> usize {
+    let steps1 = all_steps(wire1);
+    let steps2 = all_steps(wire2);
+
+    steps1
+        .iter()
+        .enumerate()
+        .filter_map(|(i, &step)| {
+            steps2
+                .iter()
+                .position(|&other| other == step)
+                .map(|left| (left, i))
+        })
+        .map(|(x, y)| x + y + 2)
+        .min()
+        .unwrap() as usize
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -96,6 +118,28 @@ mod tests {
                 "U98,R91,D20,R16,D67,R40,U7,R15,U6,R7"
             ),
             135
+        )
+    }
+
+    #[test]
+    fn example_fastest1() {
+        assert_eq!(
+            fastest_intersection(
+                "R75,D30,R83,U83,L12,D49,R71,U7,L72",
+                "U62,R66,U55,R34,D71,R55,D58,R83"
+            ),
+            610
+        )
+    }
+
+    #[test]
+    fn example_fastest2() {
+        assert_eq!(
+            fastest_intersection(
+                "R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51",
+                "U98,R91,D20,R16,D67,R40,U7,R15,U6,R7"
+            ),
+            410
         )
     }
 }
