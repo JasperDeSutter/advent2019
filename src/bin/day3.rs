@@ -11,74 +11,41 @@ fn main() {
     dbg!(fastest);
 }
 
-struct Step {
-    pub steps: usize,
-    pub dir: Dir,
-}
-enum Dir {
-    Up,
-    Down,
-    Left,
-    Right,
-}
-
-impl Iterator for Step {
-    type Item = (isize, isize);
-    fn next(&mut self) -> Option<Self::Item> {
-        self.steps = self.steps.checked_sub(1)?;
-        match self.dir {
-            Dir::Up => Some((0, 1)),
-            Dir::Down => Some((0, -1)),
-            Dir::Left => Some((-1, 0)),
-            Dir::Right => Some((1, 0)),
-        }
-    }
-}
-
-fn all_steps(line: &str) -> Vec<(isize, isize)> {
-    let steps = line.split(',').flat_map(|step| {
-        let (dir, steps) = step.split_at(1);
-        let steps = steps.parse().unwrap();
-        let dir = match dir {
-            "R" => Dir::Right,
-            "L" => Dir::Left,
-            "U" => Dir::Up,
-            "D" => Dir::Down,
-            _ => panic!("unrecognized direction"),
-        };
-        Step { dir, steps }
-    });
-
-    let mut values = Vec::new();
-    let mut current = (0isize, 0isize);
-    for step in steps {
-        current.0 += step.0;
-        current.1 += step.1;
-        values.push(current);
-    }
-    values
+fn all_steps(line: &str) -> impl Iterator<Item = (i16, i16)> + '_ {
+    line.split(',')
+        .flat_map(|step: &str| {            
+            let dir: (i16, i16) = match step.as_bytes()[0] {
+                b'R' => (0, 1),
+                b'L' => (0, -1),
+                b'U' => (1, 0),
+                b'D' => (-1, 0),
+                _ => panic!("unrecognized direction"),
+            };
+            let steps = step[1..].parse().unwrap();
+            std::iter::repeat(dir).take(steps)
+        })
+        .scan((0i16, 0i16), |state, step| {
+            *state = (state.0 + step.0, state.1 + step.1);
+            Some(*state)
+        })
 }
 
 fn closest_intersection(wire1: &str, wire2: &str) -> usize {
-    let steps1 = all_steps(wire1);
-    let steps2 = all_steps(wire2);
+    let steps2: Vec<_> = all_steps(wire2).collect();
 
-    steps1
-        .iter()
-        .filter_map(|step| steps2.iter().find(|&other| other == step))
+    all_steps(wire1)
+        .filter(|step| steps2.contains(step))
         .map(|(x, y)| x + y)
         .min()
         .unwrap() as usize
 }
 
 fn fastest_intersection(wire1: &str, wire2: &str) -> usize {
-    let steps1 = all_steps(wire1);
-    let steps2 = all_steps(wire2);
+    let steps2: Vec<_> = all_steps(wire2).collect();
 
-    steps1
-        .iter()
+    all_steps(wire1)
         .enumerate()
-        .filter_map(|(i, &step)| {
+        .filter_map(|(i, step)| {
             steps2
                 .iter()
                 .position(|&other| other == step)
