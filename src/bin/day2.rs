@@ -1,5 +1,7 @@
+use advent19::run_intcode;
+
 #[rustfmt::skip]
-const GRAVITY_ASSIST_PROGRAM: &[usize] = &[
+const GRAVITY_ASSIST_PROGRAM: &[i32] = &[
     1, 0, 0, 3,
     1, 1, 2, 3,
     1, 3, 4, 3,
@@ -43,7 +45,7 @@ const GRAVITY_ASSIST_PROGRAM: &[usize] = &[
     99, 2, 0, 14,
 ];
 
-const DESIRED_OUTPUT: usize = 19_690_720;
+const DESIRED_OUTPUT: i32 = 19_690_720;
 
 pub fn main() {
     for noun in 0..99 {
@@ -67,30 +69,6 @@ pub fn main() {
     }
 }
 
-fn run_intcode(program: Vec<usize>, instruction_ptr: usize) -> Vec<usize> {
-    let opcode = program[instruction_ptr];
-    if opcode == 99 {
-        return program;
-    }
-
-    let left = program[instruction_ptr + 1];
-    let right = program[instruction_ptr + 2];
-    let pos = program[instruction_ptr + 3];
-
-    let change = match opcode {
-        1 => program[left] + program[right],
-        2 => program[left] * program[right],
-        _ => panic!("wrong opcode!"),
-    };
-
-    let next: Vec<_> = program
-        .iter()
-        .enumerate()
-        .map(|(i, val)| if i == pos { change } else { *val })
-        .collect();
-
-    run_intcode(next, instruction_ptr + 4)
-}
 
 #[cfg(test)]
 mod tests {
