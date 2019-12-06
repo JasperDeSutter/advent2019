@@ -160,7 +160,10 @@ const CODE: &[i32] = &[
 ];
 
 fn main() {
-    let result = Program::new(&[1002, 4, 3, 4, 33] as &[i32]).run();
+    let mut prog = Program::new(CODE);
+    prog.input = Some(1);
+    prog.run();
+    println!("{:?}", prog.output);
 }
 
 #[cfg(test)]

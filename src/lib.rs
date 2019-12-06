@@ -1,6 +1,8 @@
 pub struct Program {
     code: Vec<i32>,
     ptr: usize,
+    pub input: Option<i32>,
+    pub output: Option<i32>,
 }
 
 impl Program {
@@ -8,6 +10,8 @@ impl Program {
         Self {
             code: code.into(),
             ptr: 0,
+            input: None,
+            output: None,
         }
     }
 
@@ -17,7 +21,12 @@ impl Program {
 
     pub fn run(&mut self) {
         while let Some(change) = Opcode::from(self.read(0)).execute(&self) {
-            self.code[change.pos] = change.value;
+            if let Some(pos) = change.pos {
+                self.code[pos] = change.value;
+            } else {
+                self.output = Some(change.value);
+            }
+
             self.ptr += change.inc + 1;
         }
     }
@@ -69,7 +78,7 @@ impl From<i32> for Opcode {
 #[derive(Debug)]
 struct ExecuteResult {
     value: i32,
-    pos: usize,
+    pos: Option<usize>,
     inc: usize,
 }
 
@@ -87,16 +96,26 @@ impl Opcode {
             Opcode::Add(im0, im1) => ExecuteResult {
                 value: get_arg(program, program.read(1), im0)
                     + get_arg(program, program.read(2), im1),
-                pos: program.read(3) as usize,
+                pos: Some(program.read(3) as usize),
                 inc: 3,
             },
             Opcode::Mul(im0, im1) => ExecuteResult {
                 value: get_arg(program, program.read(1), im0)
                     * get_arg(program, program.read(2), im1),
-                pos: program.read(3) as usize,
+                pos: Some(program.read(3) as usize),
                 inc: 3,
             },
-            _ => None?,
+            Opcode::Input => ExecuteResult {
+                value: program.input.unwrap(),
+                pos: Some(program.read(1) as usize),
+                inc: 1,
+            },
+            Opcode::Output => ExecuteResult {
+                value: get_arg(program, program.read(1), false),
+                pos: None,
+                inc: 1,
+            },
+            Opcode::Exit => None?,
         };
         Some(res)
     }
