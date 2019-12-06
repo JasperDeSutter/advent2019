@@ -1,11 +1,5 @@
 use advent19::Program;
 
-fn run_intcode(program: impl Into<Vec<i32>>) -> Vec<i32> {
-    let mut prog = Program::new(program);
-    prog.run();
-    prog.into_code()
-}
-
 #[rustfmt::skip]
 const GRAVITY_ASSIST_PROGRAM: &[i32] = &[
     1, 0, 0, 3,
@@ -80,7 +74,12 @@ pub fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use advent19::Program;
+
+    fn run_intcode(program: impl Into<Vec<i32>>) -> Vec<i32> {
+        let mut prog = Program::new(program);
+        prog.run();
+        prog.into_code()
+    }
 
     #[test]
     fn example1() {

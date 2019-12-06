@@ -38,28 +38,21 @@ const AIRCO_CODE: &[i32] = &[
     101, 1, 223, 223, 4, 223, 99, 226,
 ];
 
-fn main() {
-    let mut prog = Program::new(AIRCO_CODE);
-    prog.input = Some(1);
-    prog.run();
-    println!("airco output: {:?}", prog.output.unwrap());
+fn run_intcode(intcode: &[i32], input: i32) -> i32 {
+    let mut program = Program::new(intcode);
+    program.input = Some(input);
+    program.run();
+    program.output.unwrap()
+}
 
-    let mut prog = Program::new(AIRCO_CODE);
-    prog.input = Some(5);
-    prog.run();
-    println!("diagnostic code: {:?}", prog.output.unwrap());
+fn main() {
+    println!("airco output: {:?}", run_intcode(AIRCO_CODE, 1));
+    println!("diagnostic code: {:?}", run_intcode(AIRCO_CODE, 5));
 }
 
 #[cfg(test)]
 mod tests {
-    use advent19::Program;
-
-    fn run_intcode(intcode: &[i32], input: i32) -> i32 {
-        let mut program = Program::new(intcode);
-        program.input = Some(input);
-        program.run();
-        program.output.unwrap()
-    }
+    use super::*;
 
     #[test]
     fn example1() {

@@ -1,6 +1,6 @@
 fn main() {
-    const START: usize = 265275;
-    const END: usize = 781584;
+    const START: usize = 265_275;
+    const END: usize = 781_584;
 
     let matching = (START..=END)
         .filter(|i| is_valid_password(i.to_string().as_bytes()))

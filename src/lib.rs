@@ -19,30 +19,26 @@ impl Program {
         self.code[self.ptr + offset]
     }
 
+    fn arg_value(&self, mode: &[ParamMode], idx: usize) -> i32 {
+        match mode[idx] {
+            ParamMode::Immediate => self.read(idx + 1),
+            ParamMode::Position => self.code[self.read(idx + 1) as usize],
+        }
+    }
+
     pub fn run(&mut self) {
-        fn get_arg(program: &Program, value: i32, mode: ParamMode) -> i32 {
-            match mode {
-                ParamMode::Immediate => value,
-                ParamMode::Position => program.code[value as usize],
-            }
-        }
-
-        fn get_arg_mode(program: &Program, mode: &[ParamMode], idx: usize) -> i32 {
-            get_arg(program, program.read(idx + 1), mode[idx])
-        }
-
-        self.ptr = 0;
+        assert!(self.ptr == 0, "can't run programs twice!");
         loop {
             let opcode = Opcode::from(self.read(0));
             match opcode {
                 Opcode::Add(mode) => {
-                    let value = get_arg_mode(self, &mode, 0) + get_arg_mode(self, &mode, 1);
+                    let value = self.arg_value(&mode, 0) + self.arg_value(&mode, 1);
                     let pos = self.read(3) as usize;
                     self.code[pos] = value;
                     self.ptr += 3 + 1;
                 }
                 Opcode::Mul(mode) => {
-                    let value = get_arg_mode(self, &mode, 0) * get_arg_mode(self, &mode, 1);
+                    let value = self.arg_value(&mode, 0) * self.arg_value(&mode, 1);
                     let pos = self.read(3) as usize;
                     self.code[pos] = value;
                     self.ptr += 3 + 1;
@@ -53,33 +49,31 @@ impl Program {
                     self.ptr += 1 + 1;
                 }
                 Opcode::Output(mode) => {
-                    self.output = Some(get_arg_mode(self, &mode, 0));
+                    self.output = Some(self.arg_value(&mode, 0));
                     self.ptr += 1 + 1;
                 }
                 Opcode::JumpIfTrue(mode) => {
-                    self.ptr = match get_arg_mode(self, &mode, 0) {
+                    self.ptr = match self.arg_value(&mode, 0) {
                         0 => self.ptr + 2 + 1,
-                        _ => get_arg_mode(self, &mode, 1) as usize,
+                        _ => self.arg_value(&mode, 1) as usize,
                     }
                 }
                 Opcode::JumpIfFalse(mode) => {
-                    self.ptr = match get_arg_mode(self, &mode, 0) {
-                        0 => get_arg_mode(self, &mode, 1) as usize,
+                    self.ptr = match self.arg_value(&mode, 0) {
+                        0 => self.arg_value(&mode, 1) as usize,
                         _ => self.ptr + 2 + 1,
                     }
                 }
                 Opcode::LessThan(mode) => {
-                    let value1: i32 = get_arg_mode(self, &mode, 0);
-                    let value2: i32 = get_arg_mode(self, &mode, 1);
+                    let value = self.arg_value(&mode, 0) < self.arg_value(&mode, 1);
                     let pos = self.read(3) as usize;
-                    self.code[pos] = (value1 < value2) as i32;
+                    self.code[pos] = value as i32;
                     self.ptr += 3 + 1;
                 }
                 Opcode::Equals(mode) => {
-                    let value1: i32 = get_arg_mode(self, &mode, 0);
-                    let value2: i32 = get_arg_mode(self, &mode, 1);
+                    let value = self.arg_value(&mode, 0) == self.arg_value(&mode, 1);
                     let pos = self.read(3) as usize;
-                    self.code[pos] = (value1 == value2) as i32;
+                    self.code[pos] = value as i32;
                     self.ptr += 3 + 1;
                 }
                 Opcode::Exit => break,
@@ -111,8 +105,8 @@ enum Opcode {
 
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
 enum ParamMode {
-    Immediate,
     Position,
+    Immediate,
 }
 
 fn arg_mode_immediate(instruction: i32, arg: u32) -> ParamMode {
