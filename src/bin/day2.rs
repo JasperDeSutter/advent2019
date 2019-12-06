@@ -1,4 +1,10 @@
-use advent19::run_intcode;
+use advent19::Program;
+
+fn run_intcode(program: impl Into<Vec<i32>>) -> Vec<i32> {
+    let mut prog = Program::new(program);
+    prog.run();
+    prog.into_code()
+}
 
 #[rustfmt::skip]
 const GRAVITY_ASSIST_PROGRAM: &[i32] = &[
@@ -53,7 +59,9 @@ pub fn main() {
             let mut program: Vec<_> = GRAVITY_ASSIST_PROGRAM.into();
             program[1] = noun;
             program[2] = verb;
-            let result = run_intcode(program, 0)[0];
+            let mut prog = Program::new(program);
+            prog.run();
+            let result = prog.code()[0];
             if noun == 12 && verb == 2 {
                 println!("part1 solution: {}", result);
             }
@@ -69,25 +77,31 @@ pub fn main() {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use advent19::Program;
 
     #[test]
     fn example1() {
-        assert_eq!(run_intcode(vec![1, 0, 0, 0, 99], 0), vec![2, 0, 0, 0, 99]);
+        assert_eq!(
+            run_intcode(&[1, 0, 0, 0, 99] as &[i32]),
+            vec![2, 0, 0, 0, 99]
+        );
     }
 
     #[test]
     fn example2() {
-        assert_eq!(run_intcode(vec![2, 3, 0, 3, 99], 0), vec![2, 3, 0, 6, 99]);
+        assert_eq!(
+            run_intcode(&[2, 3, 0, 3, 99] as &[i32]),
+            vec![2, 3, 0, 6, 99]
+        );
     }
 
     #[test]
     fn example3() {
         assert_eq!(
-            run_intcode(vec![2, 4, 4, 5, 99, 0], 0),
+            run_intcode(&[2, 4, 4, 5, 99, 0] as &[i32]),
             vec![2, 4, 4, 5, 99, 9801]
         );
     }
@@ -95,7 +109,7 @@ mod tests {
     #[test]
     fn example4() {
         assert_eq!(
-            run_intcode(vec![1, 1, 1, 4, 99, 5, 6, 0, 99], 0),
+            run_intcode(&[1, 1, 1, 4, 99, 5, 6, 0, 99] as &[i32]),
             vec![30, 1, 1, 4, 2, 5, 6, 0, 99]
         );
     }

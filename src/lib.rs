@@ -1,7 +1,42 @@
+pub struct Program {
+    code: Vec<i32>,
+    ptr: usize,
+}
+
+impl Program {
+    pub fn new(code: impl Into<Vec<i32>>) -> Self {
+        Self {
+            code: code.into(),
+            ptr: 0,
+        }
+    }
+
+    fn read(&self, offset: usize) -> i32 {
+        self.code[self.ptr + offset]
+    }
+
+    pub fn run(&mut self) {
+        while let Some(change) = Opcode::from(self.read(0)).execute(&self) {
+            self.code[change.pos] = change.value;
+            self.ptr += change.inc + 1;
+        }
+    }
+
+    pub fn code(&self) -> &[i32] {
+        &self.code
+    }
+
+    pub fn into_code(self) -> Vec<i32> {
+        self.code
+    }
+}
+
 #[derive(PartialEq, Eq, Debug, Copy, Clone)]
 enum Opcode {
     Add(bool, bool),
     Mul(bool, bool),
+    Input,
+    Output,
     Exit,
 }
 
@@ -23,6 +58,8 @@ impl From<i32> for Opcode {
                 arg_mode_immediate(instruction, 0),
                 arg_mode_immediate(instruction, 1),
             ),
+            3 => Opcode::Input,
+            4 => Opcode::Output,
             99 => Opcode::Exit,
             _ => panic!("wrong opcode!"),
         }
@@ -36,47 +73,31 @@ struct ExecuteResult {
     inc: usize,
 }
 
-fn get_arg(program: &[i32], value: i32, immediate: bool) -> i32 {
+fn get_arg(program: &Program, value: i32, immediate: bool) -> i32 {
     if immediate {
         value
     } else {
-        program[value as usize]
+        program.code[value as usize]
     }
 }
 
 impl Opcode {
-    fn execute(self, program: &[i32], ptr: usize) -> Option<ExecuteResult> {
+    fn execute(self, program: &Program) -> Option<ExecuteResult> {
         let res = match self {
             Opcode::Add(im0, im1) => ExecuteResult {
-                value: get_arg(program, program[ptr], im0)
-                    + get_arg(program, program[ptr + 1], im1),
-                pos: program[ptr + 2] as usize,
+                value: get_arg(program, program.read(1), im0)
+                    + get_arg(program, program.read(2), im1),
+                pos: program.read(3) as usize,
                 inc: 3,
             },
             Opcode::Mul(im0, im1) => ExecuteResult {
-                value: get_arg(program, program[ptr], im0)
-                    * get_arg(program, program[ptr + 1], im1),
-                pos: program[ptr + 2] as usize,
+                value: get_arg(program, program.read(1), im0)
+                    * get_arg(program, program.read(2), im1),
+                pos: program.read(3) as usize,
                 inc: 3,
             },
             _ => None?,
         };
         Some(res)
-    }
-}
-
-pub fn run_intcode(program: Vec<i32>, instruction_ptr: usize) -> Vec<i32> {
-    let opcode = Opcode::from(program[instruction_ptr]);
-
-    if let Some(change) = opcode.execute(&program, instruction_ptr + 1) {
-        let next: Vec<_> = program
-            .iter()
-            .enumerate()
-            .map(|(i, val)| if i == change.pos { change.value } else { *val })
-            .collect();
-
-        run_intcode(next, instruction_ptr + change.inc + 1)
-    } else {
-        return program;
     }
 }
