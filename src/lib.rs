@@ -1,17 +1,13 @@
-pub struct Program<'a> {
+pub struct Program {
   code: Vec<i32>,
   ptr: usize,
-  pub input: Box<dyn Iterator<Item = i32> + 'a>,
-  pub output: Option<i32>,
 }
 
-impl<'a> Program<'a> {
+impl Program {
   pub fn new(code: impl Into<Vec<i32>>) -> Self {
     Self {
       code: code.into(),
       ptr: 0,
-      input: Box::new(std::iter::empty()),
-      output: None,
     }
   }
 
@@ -26,8 +22,8 @@ impl<'a> Program<'a> {
     }
   }
 
-  pub fn run(&mut self) {
-    assert!(self.ptr == 0, "can't run programs twice!");
+  pub fn run(&mut self, mut input: impl FnMut() -> i32) -> Option<i32> {
+    // assert!(self.ptr == 0, "can't run programs twice!");
     loop {
       let opcode = Opcode::from(self.read(0));
       match opcode {
@@ -45,12 +41,13 @@ impl<'a> Program<'a> {
         }
         Opcode::Input => {
           let pos = self.read(1) as usize;
-          self.code[pos] = self.input.next().expect("not enough input");
+          self.code[pos] = input();
           self.ptr += 1 + 1;
         }
         Opcode::Output(mode) => {
-          self.output = Some(self.arg_value(&mode, 0));
+          let res = self.arg_value(&mode, 0);
           self.ptr += 1 + 1;
+          return Some(res);
         }
         Opcode::JumpIfTrue(mode) => {
           self.ptr = match self.arg_value(&mode, 0) {
@@ -76,7 +73,7 @@ impl<'a> Program<'a> {
           self.code[pos] = value as i32;
           self.ptr += 3 + 1;
         }
-        Opcode::Exit => break,
+        Opcode::Exit => return None,
       }
     }
   }
