@@ -39,7 +39,7 @@ const AIRCO_CODE: &[i32] = &[
 
 fn run_intcode(intcode: &[i32], input: i32) -> i32 {
   let mut program = Program::new(intcode);
-  program.input = Some(input);
+  program.input = Box::new(std::iter::once(input));
   program.run();
   program.output.unwrap()
 }

@@ -1,16 +1,16 @@
-pub struct Program {
+pub struct Program<'a> {
   code: Vec<i32>,
   ptr: usize,
-  pub input: Option<i32>,
+  pub input: Box<dyn Iterator<Item = i32> + 'a>,
   pub output: Option<i32>,
 }
 
-impl Program {
+impl<'a> Program<'a> {
   pub fn new(code: impl Into<Vec<i32>>) -> Self {
     Self {
       code: code.into(),
       ptr: 0,
-      input: None,
+      input: Box::new(std::iter::empty()),
       output: None,
     }
   }
@@ -45,8 +45,7 @@ impl Program {
         }
         Opcode::Input => {
           let pos = self.read(1) as usize;
-          println!("getting input");
-          self.code[pos] = self.input.unwrap();
+          self.code[pos] = self.input.next().expect("not enough input");
           self.ptr += 1 + 1;
         }
         Opcode::Output(mode) => {
@@ -143,25 +142,5 @@ impl From<i32> for Opcode {
       99 => Opcode::Exit,
       _ => panic!("wrong opcode!"),
     }
-  }
-}
-
-#[cfg(test)]
-mod tests {
-  use super::*;
-
-  #[test]
-  fn fibonacci() {
-    // https://github.com/emmericp/aoc19-intcode-jit/blob/master/fibonacci.intcode
-    const CODE: &[i32] = &[
-      1101, 0, 0, 0, 1101, 0, 0, 0, 3, 0, 1007, 0, 3, 5, 1006, 5, 20, 104, 1, 99, 1101, 0, 1, 1,
-      1101, 0, 1, 2, 1101, 0, 1, 3, 1101, 0, 2, 4, 8, 4, 0, 5, 1006, 5, 46, 4, 3, 99, 1, 1, 2, 3,
-      1001, 2, 0, 1, 1001, 3, 0, 2, 1001, 4, 1, 4, 1106, 0, 36,
-    ];
-
-    let mut program = Program::new(CODE);
-    program.input = Some(1000);
-    program.run();
-    println!("{:?}", program.output);
   }
 }
