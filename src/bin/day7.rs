@@ -22,14 +22,38 @@ const AMPLIFIER_CODE: &[i32] = &[
   9, 101, 2, 9, 9, 4, 9, 99,
 ];
 
+struct Permuter {
+  data: [i32; 5],
+  stack: [usize; 4],
+}
+
+impl Permuter {
+  fn next(&mut self) -> bool {
+    for (i, s) in self.stack.iter_mut().enumerate() {
+      if *s <= i {
+        let j = if (i % 2) == 0 { *s } else { 0 };
+        self.data.swap(j, i + 1);
+        *s += 1;
+        return true;
+      } else {
+        *s = 0;
+      }
+    }
+    false
+  }
+}
+
 fn get_max_truster_value(code: &[i32]) -> (i32, [i32; 5]) {
   let mut max = <(i32, [i32; 5])>::default();
 
-  let mut combination = [0, 1, 2, 3, 4];
-  let mut stack = [0usize; 4];
+  let mut permuter = Permuter {
+    data: [0, 1, 2, 3, 4],
+    stack: [0; 4],
+  };
 
-  'outer: loop {
-    let thruster_signal = combination
+  while {
+    let thruster_signal = permuter
+      .data
       .iter()
       .scan(0, |signal, &phase| {
         let input = [phase, *signal];
@@ -42,22 +66,11 @@ fn get_max_truster_value(code: &[i32]) -> (i32, [i32; 5]) {
       .unwrap();
 
     if thruster_signal > max.0 {
-      max = (thruster_signal, combination)
+      max = (thruster_signal, permuter.data)
     }
 
-    for (i, s) in stack.iter_mut().enumerate() {
-      if *s <= i {
-        let j = if (i % 2) == 0 { *s } else { 0 };
-        combination.swap(j, i + 1);
-        *s += 1;
-        continue 'outer;
-      } else {
-        *s = 0;
-      }
-    }
-
-    break;
-  }
+    permuter.next()
+  } {}
 
   max
 }
@@ -65,10 +78,12 @@ fn get_max_truster_value(code: &[i32]) -> (i32, [i32; 5]) {
 fn max_truster_value_feedback(code: &[i32]) -> (i32, [i32; 5]) {
   let mut max = <(i32, [i32; 5])>::default();
 
-  let mut combination = [5, 6, 7, 8, 9];
-  let mut stack = [0usize; 4];
+  let mut permuter = Permuter {
+    data: [5, 6, 7, 8, 9],
+    stack: [0; 4],
+  };
 
-  'outer: loop {
+  while {
     let mut programs = [
       Program::new(code),
       Program::new(code),
@@ -78,10 +93,10 @@ fn max_truster_value_feedback(code: &[i32]) -> (i32, [i32; 5]) {
     ];
 
     let mut signal = 0;
-    for i in 0..5 {
-      let input = [combination[i], signal];
+    for (i, p) in programs.iter_mut().enumerate() {
+      let input = [permuter.data[i], signal];
       let mut input_iter = input.iter();
-      signal = programs[i].run(|| *input_iter.next().unwrap()).unwrap();
+      signal = p.run(|| *input_iter.next().unwrap()).unwrap();
     }
     let mut i = 0;
     while let Some(result) = programs[i].run(|| signal) {
@@ -90,22 +105,11 @@ fn max_truster_value_feedback(code: &[i32]) -> (i32, [i32; 5]) {
     }
 
     if signal > max.0 {
-      max = (signal, combination)
+      max = (signal, permuter.data)
     }
 
-    for (i, s) in stack.iter_mut().enumerate() {
-      if *s <= i {
-        let j = if (i % 2) == 0 { *s } else { 0 };
-        combination.swap(j, i + 1);
-        *s += 1;
-        continue 'outer;
-      } else {
-        *s = 0;
-      }
-    }
-
-    break;
-  }
+    permuter.next()
+  } {}
 
   max
 }
