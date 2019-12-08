@@ -1,4 +1,5 @@
 use advent19::Program;
+use std::iter::{empty, once};
 
 const AIRCO_CODE: &[i32] = &[
   3, 225, 1, 225, 6, 6, 1100, 1, 238, 225, 104, 0, 1001, 152, 55, 224, 1001, 224, -68, 224, 4, 224,
@@ -39,8 +40,8 @@ const AIRCO_CODE: &[i32] = &[
 
 fn run_intcode(intcode: &[i32], input: i32) -> i32 {
   let mut program = Program::new(intcode);
-  let res = program.run(std::iter::once(input)).unwrap();
-  assert!(program.run(std::iter::empty()).is_none());
+  let res = program.run(once(input)).unwrap();
+  assert!(program.run(empty()).is_none());
   res
 }
 
@@ -56,7 +57,7 @@ mod tests {
   #[test]
   fn example1() {
     let mut program = Program::new(&[1002, 4, 3, 4, 33] as &[i32]);
-    program.run(std::iter::empty());
+    program.run(empty());
     assert_eq!(program.into_code(), vec![1002, 4, 3, 4, 99]);
   }
 

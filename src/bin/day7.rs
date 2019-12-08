@@ -1,4 +1,5 @@
-use advent19::Program;
+use advent19::{Permuter, Program};
+use std::iter::once;
 
 const AMPLIFIER_CODE: &[i32] = &[
   3, 8, 1001, 8, 10, 8, 105, 1, 0, 0, 21, 42, 67, 88, 101, 114, 195, 276, 357, 438, 99999, 3, 9,
@@ -22,53 +23,10 @@ const AMPLIFIER_CODE: &[i32] = &[
   9, 101, 2, 9, 9, 4, 9, 99,
 ];
 
-pub struct Permuter {
-  data: [i32; 5],
-  stack: [usize; 4],
-}
-
-impl Permuter {
-  pub fn new(combination: [i32; 5]) -> Self {
-    Permuter {
-      data: combination,
-      stack: <_>::default(),
-    }
-  }
-
-  pub fn combination(&self) -> [i32; 5] {
-    self.data
-  }
-
-  pub fn permute(&mut self) -> bool {
-    for (i, s) in self.stack.iter_mut().enumerate() {
-      if *s <= i {
-        let j = if (i % 2) == 0 { *s } else { 0 };
-        self.data.swap(j, i + 1);
-        *s += 1;
-        return true;
-      } else {
-        *s = 0;
-      }
-    }
-    false
-  }
-}
-
-impl Iterator for Permuter {
-  type Item = [i32; 5];
-  fn next(&mut self) -> Option<Self::Item> {
-    if self.permute() {
-      Some(self.combination())
-    } else {
-      None
-    }
-  }
-}
-
 fn get_max_truster_value(code: &[i32]) -> (i32, [i32; 5]) {
   let permuter = Permuter::new([0, 1, 2, 3, 4]);
 
-  std::iter::once(permuter.combination())
+  once(permuter.combination())
     .chain(permuter)
     .map(|combination| {
       let signal = combination.iter().fold(0, |signal, &phase| {
@@ -85,7 +43,7 @@ fn get_max_truster_value(code: &[i32]) -> (i32, [i32; 5]) {
 fn max_truster_value_feedback(code: &[i32]) -> (i32, [i32; 5]) {
   let permuter = Permuter::new([5, 6, 7, 8, 9]);
 
-  std::iter::once(permuter.combination())
+  once(permuter.combination())
     .chain(permuter)
     .map(|combination| {
       let mut programs = [
@@ -105,7 +63,7 @@ fn max_truster_value_feedback(code: &[i32]) -> (i32, [i32; 5]) {
 
       let signal = (0..5)
         .cycle()
-        .try_fold(signal, |s, i| programs[i].run(std::iter::once(s)).ok_or(s))
+        .try_fold(signal, |s, i| programs[i].run(once(s)).ok_or(s))
         .unwrap_err();
 
       (signal, combination)

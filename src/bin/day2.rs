@@ -1,4 +1,5 @@
 use advent19::Program;
+use std::iter::empty;
 
 #[rustfmt::skip]
 const GRAVITY_ASSIST_PROGRAM: &[i32] = &[
@@ -54,7 +55,7 @@ pub fn main() {
       program[1] = noun;
       program[2] = verb;
       let mut prog = Program::new(program);
-      prog.run(std::iter::empty());
+      prog.run(empty());
       let result = prog.code()[0];
       if noun == 12 && verb == 2 {
         println!("part1 solution: {}", result);
@@ -77,7 +78,7 @@ mod tests {
 
   fn run_intcode(program: impl Into<Vec<i32>>) -> Vec<i32> {
     let mut prog = Program::new(program);
-    prog.run(std::iter::empty());
+    prog.run(empty());
     prog.into_code()
   }
 
