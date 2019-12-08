@@ -39,8 +39,8 @@ const AIRCO_CODE: &[i32] = &[
 
 fn run_intcode(intcode: &[i32], input: i32) -> i32 {
   let mut program = Program::new(intcode);
-  let res = program.run(|| input).unwrap();
-  assert!(program.run(|| input).is_none());
+  let res = program.run(std::iter::once(input)).unwrap();
+  assert!(program.run(std::iter::empty()).is_none());
   res
 }
 
@@ -56,7 +56,7 @@ mod tests {
   #[test]
   fn example1() {
     let mut program = Program::new(&[1002, 4, 3, 4, 33] as &[i32]);
-    program.run(|| 0);
+    program.run(std::iter::empty());
     assert_eq!(program.into_code(), vec![1002, 4, 3, 4, 99]);
   }
 

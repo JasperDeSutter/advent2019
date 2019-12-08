@@ -22,8 +22,7 @@ impl Program {
     }
   }
 
-  pub fn run(&mut self, mut input: impl FnMut() -> i32) -> Option<i32> {
-    // assert!(self.ptr == 0, "can't run programs twice!");
+  pub fn run(&mut self, mut input: impl Iterator<Item = i32>) -> Option<i32> {
     loop {
       let opcode = Opcode::from(self.read(0));
       match opcode {
@@ -41,7 +40,7 @@ impl Program {
         }
         Opcode::Input => {
           let pos = self.read(1) as usize;
-          self.code[pos] = input();
+          self.code[pos] = input.next().expect("not enough input");
           self.ptr += 1 + 1;
         }
         Opcode::Output(mode) => {

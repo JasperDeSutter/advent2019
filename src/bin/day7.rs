@@ -22,13 +22,24 @@ const AMPLIFIER_CODE: &[i32] = &[
   9, 101, 2, 9, 9, 4, 9, 99,
 ];
 
-struct Permuter {
+pub struct Permuter {
   data: [i32; 5],
   stack: [usize; 4],
 }
 
 impl Permuter {
-  fn next(&mut self) -> bool {
+  pub fn new(combination: [i32; 5]) -> Self {
+    Permuter {
+      data: combination,
+      stack: <_>::default(),
+    }
+  }
+
+  pub fn combination(&self) -> [i32; 5] {
+    self.data
+  }
+
+  pub fn permute(&mut self) -> bool {
     for (i, s) in self.stack.iter_mut().enumerate() {
       if *s <= i {
         let j = if (i % 2) == 0 { *s } else { 0 };
@@ -43,75 +54,64 @@ impl Permuter {
   }
 }
 
-fn get_max_truster_value(code: &[i32]) -> (i32, [i32; 5]) {
-  let mut max = <(i32, [i32; 5])>::default();
-
-  let mut permuter = Permuter {
-    data: [0, 1, 2, 3, 4],
-    stack: [0; 4],
-  };
-
-  while {
-    let thruster_signal = permuter
-      .data
-      .iter()
-      .scan(0, |signal, &phase| {
-        let input = [phase, *signal];
-        let mut input_iter = input.iter();
-        let mut program = Program::new(code);
-        *signal = program.run(|| *input_iter.next().unwrap()).unwrap();
-        Some(*signal)
-      })
-      .last()
-      .unwrap();
-
-    if thruster_signal > max.0 {
-      max = (thruster_signal, permuter.data)
+impl Iterator for Permuter {
+  type Item = [i32; 5];
+  fn next(&mut self) -> Option<Self::Item> {
+    if self.permute() {
+      Some(self.combination())
+    } else {
+      None
     }
+  }
+}
 
-    permuter.next()
-  } {}
+fn get_max_truster_value(code: &[i32]) -> (i32, [i32; 5]) {
+  let permuter = Permuter::new([0, 1, 2, 3, 4]);
 
-  max
+  std::iter::once(permuter.combination())
+    .chain(permuter)
+    .map(|combination| {
+      let signal = combination.iter().fold(0, |signal, &phase| {
+        Program::new(code)
+          .run([phase, signal].iter().copied())
+          .unwrap()
+      });
+      (signal, combination)
+    })
+    .max_by_key(|item| item.0)
+    .unwrap()
 }
 
 fn max_truster_value_feedback(code: &[i32]) -> (i32, [i32; 5]) {
-  let mut max = <(i32, [i32; 5])>::default();
+  let permuter = Permuter::new([5, 6, 7, 8, 9]);
 
-  let mut permuter = Permuter {
-    data: [5, 6, 7, 8, 9],
-    stack: [0; 4],
-  };
+  std::iter::once(permuter.combination())
+    .chain(permuter)
+    .map(|combination| {
+      let mut programs = [
+        Program::new(code),
+        Program::new(code),
+        Program::new(code),
+        Program::new(code),
+        Program::new(code),
+      ];
 
-  while {
-    let mut programs = [
-      Program::new(code),
-      Program::new(code),
-      Program::new(code),
-      Program::new(code),
-      Program::new(code),
-    ];
+      let signal = programs
+        .iter_mut()
+        .zip(combination.iter().copied())
+        .fold(0, |signal, (program, phase)| {
+          program.run([phase, signal].iter().copied()).unwrap()
+        });
 
-    let mut signal = 0;
-    for (i, p) in programs.iter_mut().enumerate() {
-      let input = [permuter.data[i], signal];
-      let mut input_iter = input.iter();
-      signal = p.run(|| *input_iter.next().unwrap()).unwrap();
-    }
-    let mut i = 0;
-    while let Some(result) = programs[i].run(|| signal) {
-      signal = result;
-      i = (i + 1) % 5;
-    }
+      let signal = (0..5)
+        .cycle()
+        .try_fold(signal, |s, i| programs[i].run(std::iter::once(s)).ok_or(s))
+        .unwrap_err();
 
-    if signal > max.0 {
-      max = (signal, permuter.data)
-    }
-
-    permuter.next()
-  } {}
-
-  max
+      (signal, combination)
+    })
+    .max_by_key(|item| item.0)
+    .unwrap()
 }
 
 fn main() {
