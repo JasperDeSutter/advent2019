@@ -2,7 +2,7 @@ use advent19::Program;
 use std::iter::empty;
 
 #[rustfmt::skip]
-const GRAVITY_ASSIST_PROGRAM: &[i32] = &[
+const GRAVITY_ASSIST_PROGRAM: &[i64] = &[
   1, 0, 0, 3,
   1, 1, 2, 3,
   1, 3, 4, 3,
@@ -46,7 +46,7 @@ const GRAVITY_ASSIST_PROGRAM: &[i32] = &[
   99, 2, 0, 14,
 ];
 
-const DESIRED_OUTPUT: i32 = 19_690_720;
+const DESIRED_OUTPUT: i64 = 19_690_720;
 
 pub fn main() {
   for noun in 0..99 {
@@ -76,16 +76,18 @@ pub fn main() {
 mod tests {
   use super::*;
 
-  fn run_intcode(program: impl Into<Vec<i32>>) -> Vec<i32> {
+  fn run_intcode(program: &[i64]) -> Vec<i64> {
     let mut prog = Program::new(program);
     prog.run(empty());
-    prog.into_code()
+    let mut res = prog.into_code();
+    res.truncate(program.len());
+    res
   }
 
   #[test]
   fn example1() {
     assert_eq!(
-      run_intcode(&[1, 0, 0, 0, 99] as &[i32]),
+      run_intcode(&[1, 0, 0, 0, 99i64]),
       vec![2, 0, 0, 0, 99]
     );
   }
@@ -93,7 +95,7 @@ mod tests {
   #[test]
   fn example2() {
     assert_eq!(
-      run_intcode(&[2, 3, 0, 3, 99] as &[i32]),
+      run_intcode(&[2, 3, 0, 3, 99i64]),
       vec![2, 3, 0, 6, 99]
     );
   }
@@ -101,7 +103,7 @@ mod tests {
   #[test]
   fn example3() {
     assert_eq!(
-      run_intcode(&[2, 4, 4, 5, 99, 0] as &[i32]),
+      run_intcode(&[2, 4, 4, 5, 99, 0i64]),
       vec![2, 4, 4, 5, 99, 9801]
     );
   }
@@ -109,7 +111,7 @@ mod tests {
   #[test]
   fn example4() {
     assert_eq!(
-      run_intcode(&[1, 1, 1, 4, 99, 5, 6, 0, 99] as &[i32]),
+      run_intcode(&[1, 1, 1, 4, 99, 5, 6, 0, 99i64]),
       vec![30, 1, 1, 4, 2, 5, 6, 0, 99]
     );
   }

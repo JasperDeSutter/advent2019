@@ -1,7 +1,7 @@
 use advent19::{Permuter, Program};
 use std::iter::once;
 
-const AMPLIFIER_CODE: &[i32] = &[
+const AMPLIFIER_CODE: &[i64] = &[
   3, 8, 1001, 8, 10, 8, 105, 1, 0, 0, 21, 42, 67, 88, 101, 114, 195, 276, 357, 438, 99999, 3, 9,
   101, 3, 9, 9, 1002, 9, 4, 9, 1001, 9, 5, 9, 102, 4, 9, 9, 4, 9, 99, 3, 9, 1001, 9, 3, 9, 1002, 9,
   2, 9, 101, 2, 9, 9, 102, 2, 9, 9, 1001, 9, 5, 9, 4, 9, 99, 3, 9, 102, 4, 9, 9, 1001, 9, 3, 9,
@@ -23,7 +23,7 @@ const AMPLIFIER_CODE: &[i32] = &[
   9, 101, 2, 9, 9, 4, 9, 99,
 ];
 
-fn get_max_truster_value(code: &[i32]) -> (i32, [i32; 5]) {
+fn get_max_truster_value(code: &[i64]) -> (i64, [i64; 5]) {
   let permuter = Permuter::new([0, 1, 2, 3, 4]);
 
   once(permuter.combination())
@@ -40,7 +40,7 @@ fn get_max_truster_value(code: &[i32]) -> (i32, [i32; 5]) {
     .unwrap()
 }
 
-fn max_truster_value_feedback(code: &[i32]) -> (i32, [i32; 5]) {
+fn max_truster_value_feedback(code: &[i64]) -> (i64, [i64; 5]) {
   let permuter = Permuter::new([5, 6, 7, 8, 9]);
 
   once(permuter.combination())

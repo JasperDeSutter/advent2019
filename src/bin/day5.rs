@@ -1,7 +1,7 @@
 use advent19::Program;
 use std::iter::{empty, once};
 
-const AIRCO_CODE: &[i32] = &[
+const AIRCO_CODE: &[i64] = &[
   3, 225, 1, 225, 6, 6, 1100, 1, 238, 225, 104, 0, 1001, 152, 55, 224, 1001, 224, -68, 224, 4, 224,
   1002, 223, 8, 223, 1001, 224, 4, 224, 1, 224, 223, 223, 1101, 62, 41, 225, 1101, 83, 71, 225,
   102, 59, 147, 224, 101, -944, 224, 224, 4, 224, 1002, 223, 8, 223, 101, 3, 224, 224, 1, 224, 223,
@@ -38,7 +38,7 @@ const AIRCO_CODE: &[i32] = &[
   223, 1005, 224, 674, 101, 1, 223, 223, 4, 223, 99, 226,
 ];
 
-fn run_intcode(intcode: &[i32], input: i32) -> i32 {
+fn run_intcode(intcode: &[i64], input: i64) -> i64 {
   let mut program = Program::new(intcode);
   let res = program.run(once(input)).unwrap();
   assert!(program.run(empty()).is_none());
@@ -56,56 +56,56 @@ mod tests {
 
   #[test]
   fn example1() {
-    let mut program = Program::new(&[1002, 4, 3, 4, 33] as &[i32]);
+    let mut program = Program::new(&[1002, 4, 3, 4, 33i64] as &[i64]);
     program.run(empty());
-    assert_eq!(program.into_code(), vec![1002, 4, 3, 4, 99]);
+    assert_eq!(&program.into_code()[0..5], &[1002, 4, 3, 4, 99i64]);
   }
 
   #[test]
   fn example2() {
-    const CODE: &[i32] = &[3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8];
+    const CODE: &[i64] = &[3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8];
     assert_eq!(run_intcode(CODE, 8), 1);
     assert_eq!(run_intcode(CODE, 7), 0);
   }
 
   #[test]
   fn example3() {
-    const CODE: &[i32] = &[3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8];
+    const CODE: &[i64] = &[3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8];
     assert_eq!(run_intcode(CODE, 7), 1);
     assert_eq!(run_intcode(CODE, 9), 0);
   }
 
   #[test]
   fn example4() {
-    const CODE: &[i32] = &[3, 3, 1108, -1, 8, 3, 4, 3, 99];
+    const CODE: &[i64] = &[3, 3, 1108, -1, 8, 3, 4, 3, 99];
     assert_eq!(run_intcode(CODE, 8), 1);
     assert_eq!(run_intcode(CODE, 9), 0);
   }
 
   #[test]
   fn example5() {
-    const CODE: &[i32] = &[3, 3, 1107, -1, 8, 3, 4, 3, 99];
+    const CODE: &[i64] = &[3, 3, 1107, -1, 8, 3, 4, 3, 99];
     assert_eq!(run_intcode(CODE, 7), 1);
     assert_eq!(run_intcode(CODE, 9), 0);
   }
 
   #[test]
   fn example6() {
-    const CODE: &[i32] = &[3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
+    const CODE: &[i64] = &[3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
     assert_eq!(run_intcode(CODE, 0), 0);
     assert_eq!(run_intcode(CODE, 5), 1);
   }
 
   #[test]
   fn example7() {
-    const CODE: &[i32] = &[3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
+    const CODE: &[i64] = &[3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
     assert_eq!(run_intcode(CODE, 0), 0);
     assert_eq!(run_intcode(CODE, -1), 1);
   }
 
   #[test]
   fn example8() {
-    const CODE: &[i32] = &[
+    const CODE: &[i64] = &[
       3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31, 1106, 0, 36, 98, 0, 0,
       1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104, 999, 1105, 1, 46, 1101, 1000, 1, 20, 4, 20, 1105,
       1, 46, 98, 99,

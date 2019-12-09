@@ -1,17 +1,17 @@
 pub struct Permuter {
-  data: [i32; 5],
+  data: [i64; 5],
   stack: [usize; 4],
 }
 
 impl Permuter {
-  pub fn new(combination: [i32; 5]) -> Self {
+  pub fn new(combination: [i64; 5]) -> Self {
     Permuter {
       data: combination,
       stack: <_>::default(),
     }
   }
 
-  pub fn combination(&self) -> [i32; 5] {
+  pub fn combination(&self) -> [i64; 5] {
     self.data
   }
 
@@ -31,7 +31,7 @@ impl Permuter {
 }
 
 impl Iterator for Permuter {
-  type Item = [i32; 5];
+  type Item = [i64; 5];
   fn next(&mut self) -> Option<Self::Item> {
     if self.permute() {
       Some(self.combination())
