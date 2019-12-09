@@ -51,8 +51,8 @@ const CODE: &[i64] = &[
 
 fn main() {
   let mut prog = Program::new(CODE);
-  while let Some(err) = prog.run(std::iter::once(1)) {
-    dbg!(err);
+  while let Some(wrong_opcode_or_result) = prog.run(std::iter::once(1)) {
+    dbg!(wrong_opcode_or_result);
   }
 }
 
@@ -62,11 +62,12 @@ mod day9_tests {
 
   #[test]
   fn example1() {
-    let mut prog = Program::new(&[
+    let input = vec![
       109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99i64,
-    ] as &[i64]);
+    ];
+    let mut prog = Program::new(input.clone());
     let result: Vec<_> = std::iter::from_fn(|| prog.run(std::iter::empty())).collect();
-    dbg!(result); // not itself???
+    assert_eq!(input, result);
   }
 
   #[test]
