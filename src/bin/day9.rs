@@ -54,6 +54,9 @@ fn main() {
   while let Some(wrong_opcode_or_result) = prog.run(std::iter::once(1)) {
     dbg!(wrong_opcode_or_result);
   }
+  let mut prog = Program::new(CODE);
+  let coordinates = prog.run(std::iter::once(2));
+  dbg!(coordinates);
 }
 
 #[cfg(test)]

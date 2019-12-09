@@ -17,75 +17,71 @@ impl Program {
     }
   }
 
-  fn read(&self, offset: usize) -> i64 {
-    self.code[self.ptr + offset]
-  }
-
-  fn arg_value(&self, mode: &[ParamMode], idx: usize) -> i64 {
-    match mode[idx] {
-      ParamMode::Position => self.code[self.read(idx + 1) as usize],
-      ParamMode::Immediate => self.read(idx + 1),
-      ParamMode::Relative => self.code[(self.relative_base + self.read(idx + 1)) as usize],
+  fn offset_value(&self, mode: ParamMode, offset_value: i64) -> Option<usize> {
+    match mode {
+      ParamMode::Position => Some(offset_value as usize),
+      ParamMode::Relative => Some((self.relative_base + offset_value) as usize),
+      _ => None,
     }
   }
 
-  fn write(&mut self, mode: &[ParamMode], idx: usize, value: i64) {
-    let pos = match mode[idx] {
-      ParamMode::Position => self.read(idx + 1),
-      ParamMode::Relative => self.relative_base + self.read(idx + 1),
-      _ => panic!(),
+  fn arg_value(&self, mode: &[ParamMode], idx: usize) -> i64 {
+    let offset_value = self.code[self.ptr + idx + 1];
+    match self.offset_value(mode[idx], offset_value) {
+      Some(offset) => self.code[offset],
+      None => offset_value,
+    }
+  }
+
+  fn write(&mut self, mode: &[ParamMode], value: i64) {
+    let idx = mode.len() - 1;
+    let offset_value = self.code[self.ptr + idx + 1];
+    let offset = self.offset_value(mode[idx], offset_value).unwrap();
+    self.code[offset] = value;
+    self.ptr += mode.len() + 1;
+  }
+
+  #[inline]
+  fn jump(&mut self, jump: bool, mode: &[ParamMode]) {
+    self.ptr = if jump {
+      self.arg_value(&mode, mode.len() - 1) as usize
+    } else {
+      self.ptr + mode.len() + 1
     };
-    self.code[pos as usize] = value;
   }
 
   pub fn run(&mut self, mut input: impl Iterator<Item = i64>) -> Option<i64> {
     loop {
-      match Opcode::from(self.read(0)) {
+      match Opcode::from(self.code[self.ptr]) {
         Opcode::Add(mode) => {
           let value = self.arg_value(&mode, 0) + self.arg_value(&mode, 1);
-          self.write(&mode, 2, value);
-          self.ptr += mode.len() + 1;
+          self.write(&mode, value);
         }
         Opcode::Mul(mode) => {
           let value = self.arg_value(&mode, 0) * self.arg_value(&mode, 1);
-          self.write(&mode, 2, value);
-          self.ptr += mode.len() + 1;
+          self.write(&mode, value);
+        }
+        Opcode::LessThan(mode) => {
+          let value = self.arg_value(&mode, 0) < self.arg_value(&mode, 1);
+          self.write(&mode, value as i64);
+        }
+        Opcode::Equals(mode) => {
+          let value = self.arg_value(&mode, 0) == self.arg_value(&mode, 1);
+          self.write(&mode, value as i64);
         }
         Opcode::Input(mode) => {
           let value = input.next().expect("not enough input");
-          self.write(&mode, 0, value);
-          self.ptr += mode.len() + 1;
+          self.write(&mode, value);
         }
         Opcode::Output(mode) => {
           let res = self.arg_value(&mode, 0);
           self.ptr += mode.len() + 1;
           return Some(res);
         }
-        Opcode::JumpIfTrue(mode) => {
-          self.ptr = match self.arg_value(&mode, 0) {
-            0 => self.ptr + mode.len() + 1,
-            _ => self.arg_value(&mode, 1) as usize,
-          }
-        }
-        Opcode::JumpIfFalse(mode) => {
-          self.ptr = match self.arg_value(&mode, 0) {
-            0 => self.arg_value(&mode, 1) as usize,
-            _ => self.ptr + mode.len() + 1,
-          }
-        }
-        Opcode::LessThan(mode) => {
-          let value = self.arg_value(&mode, 0) < self.arg_value(&mode, 1);
-          self.write(&mode, 2, value as i64);
-          self.ptr += mode.len() + 1;
-        }
-        Opcode::Equals(mode) => {
-          let value = self.arg_value(&mode, 0) == self.arg_value(&mode, 1);
-          self.write(&mode, 2, value as i64);
-          self.ptr += mode.len() + 1;
-        }
+        Opcode::JumpIfTrue(mode) => self.jump(self.arg_value(&mode, 0) != 0, &mode),
+        Opcode::JumpIfFalse(mode) => self.jump(self.arg_value(&mode, 0) == 0, &mode),
         Opcode::RelativeBase(mode) => {
-          let value = self.arg_value(&mode, 0);
-          self.relative_base += value;
+          self.relative_base += self.arg_value(&mode, 0);
           self.ptr += mode.len() + 1;
         }
         Opcode::Exit => return None,
@@ -123,6 +119,7 @@ enum ParamMode {
   Relative,
 }
 
+#[inline]
 fn arg_mode_immediate(instruction: i64, arg: u32) -> ParamMode {
   let decimal_pos = 10i64.pow(arg + 2);
   match (instruction / decimal_pos) % 10 {
@@ -133,37 +130,34 @@ fn arg_mode_immediate(instruction: i64, arg: u32) -> ParamMode {
   }
 }
 
-fn arg_mode_3(instruction: i64) -> [ParamMode; 3] {
-  [
-    arg_mode_immediate(instruction, 0),
-    arg_mode_immediate(instruction, 1),
-    arg_mode_immediate(instruction, 2),
-  ]
-}
-
-fn arg_mode_2(instruction: i64) -> [ParamMode; 2] {
-  [
-    arg_mode_immediate(instruction, 0),
-    arg_mode_immediate(instruction, 1),
-  ]
-}
-
-fn arg_mode_1(instruction: i64) -> [ParamMode; 1] {
-  [arg_mode_immediate(instruction, 0)]
+macro_rules! arg_mode {
+  ($i:expr => $($x:expr),*) => ([
+    $(arg_mode_immediate($i, $x)),*
+  ]);
 }
 
 impl From<i64> for Opcode {
   fn from(instruction: i64) -> Self {
+    fn arg1(i: i64) -> [ParamMode; 1] {
+      arg_mode![i => 0]
+    }
+    fn arg2(i: i64) -> [ParamMode; 2] {
+      arg_mode![i => 0, 1]
+    }
+    fn arg3(i: i64) -> [ParamMode; 3] {
+      arg_mode![i => 0, 1, 2]
+    }
+
     match instruction % 100 {
-      1 => Opcode::Add(arg_mode_3(instruction)),
-      2 => Opcode::Mul(arg_mode_3(instruction)),
-      3 => Opcode::Input(arg_mode_1(instruction)),
-      4 => Opcode::Output(arg_mode_1(instruction)),
-      5 => Opcode::JumpIfTrue(arg_mode_2(instruction)),
-      6 => Opcode::JumpIfFalse(arg_mode_2(instruction)),
-      7 => Opcode::LessThan(arg_mode_3(instruction)),
-      8 => Opcode::Equals(arg_mode_3(instruction)),
-      9 => Opcode::RelativeBase(arg_mode_1(instruction)),
+      1 => Opcode::Add(arg3(instruction)),
+      2 => Opcode::Mul(arg3(instruction)),
+      3 => Opcode::Input(arg1(instruction)),
+      4 => Opcode::Output(arg1(instruction)),
+      5 => Opcode::JumpIfTrue(arg2(instruction)),
+      6 => Opcode::JumpIfFalse(arg2(instruction)),
+      7 => Opcode::LessThan(arg3(instruction)),
+      8 => Opcode::Equals(arg3(instruction)),
+      9 => Opcode::RelativeBase(arg1(instruction)),
       99 => Opcode::Exit,
       i => panic!("wrong opcode {}! ({})", i, instruction),
     }
