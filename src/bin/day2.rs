@@ -86,18 +86,12 @@ mod tests {
 
   #[test]
   fn example1() {
-    assert_eq!(
-      run_intcode(&[1, 0, 0, 0, 99i64]),
-      vec![2, 0, 0, 0, 99]
-    );
+    assert_eq!(run_intcode(&[1, 0, 0, 0, 99i64]), vec![2, 0, 0, 0, 99]);
   }
 
   #[test]
   fn example2() {
-    assert_eq!(
-      run_intcode(&[2, 3, 0, 3, 99i64]),
-      vec![2, 3, 0, 6, 99]
-    );
+    assert_eq!(run_intcode(&[2, 3, 0, 3, 99i64]), vec![2, 3, 0, 6, 99]);
   }
 
   #[test]

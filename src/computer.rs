@@ -6,7 +6,7 @@ pub struct Program {
 
 impl Program {
   pub fn new(code: impl Into<Vec<i64>>) -> Self {
-    const MIN_MEMORY: usize = 2048;
+    const MIN_MEMORY: usize = 4096;
 
     let mut mem: Vec<_> = code.into();
     mem.extend(std::iter::repeat(0).take(MIN_MEMORY.saturating_sub(mem.len())));
